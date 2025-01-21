@@ -38,9 +38,12 @@ userSchema.methods.generateAuthToken = ()=>{
     return token;
 }
 
-userSchema.methods.comparePassword = async(password)=>{
-    return await bcrypt.compare(password,this.password)
-}
+userSchema.methods.comparePassword = async function (password) {
+    if (!password || !this.password) {
+      throw new Error("Password or hash is missing");
+    }
+    return await bcrypt.compare(password, this.password);
+  };
 
 userSchema.statics.hashPassword = async(password)=>{
     return await bcrypt.hash(password, 10)

@@ -11,7 +11,7 @@ module.exports.registerUser = async(req, res, next)=>{
     if(!errors.isEmpty()){
         return res.status(400).json({errors: errors.array()});
     }
-    const {fullname, lastname, email, password} = req.body
+    const {fullname, lastname, email, password, phonenumber} = req.body
     console.log(req.body);
     
 

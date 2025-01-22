@@ -57,6 +57,7 @@ Register a new user in the system.
     "status": "error",
     "message": "Email already exists"
 }
+```
 
 ## Login User Endpoint
 
@@ -112,5 +113,68 @@ Authenticate a user and receive an access token.
 {
     "status": "error",
     "message": "Invalid email or password"
+}
+```
+
+## Get User Profile Endpoint
+
+### `GET /users/profile`
+
+Retrieve the authenticated user's profile information.
+
+### Headers
+
+| Name | Type | Description |
+|------|------|-------------|
+| Authorization | string | Bearer token (required) |
+
+### Response Status Codes
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Profile retrieved successfully |
+| 401 | Unauthorized - Invalid or missing token |
+| 500 | Internal Server Error |
+
+### Example Response (Success)
+
+```json
+{
+    "status": "success",
+    "data": {
+        "userId": "uuid",
+        "firstname": "John",
+        "lastname": "Doe",
+        "email": "john@example.com"
+    }
+}
+```
+
+## Logout User Endpoint
+
+### `GET /users/logout`
+
+Logout the currently authenticated user and invalidate their token.
+
+### Headers
+
+| Name | Type | Description |
+|------|------|-------------|
+| Authorization | string | Bearer token (required) |
+
+### Response Status Codes
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Successfully logged out |
+| 401 | Unauthorized - Invalid or missing token |
+| 500 | Internal Server Error |
+
+### Example Response (Success)
+
+```json
+{
+    "status": "success",
+    "message": "Successfully logged out"
 }
 ```

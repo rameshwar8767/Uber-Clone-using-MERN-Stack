@@ -5,8 +5,9 @@ const express = require("express")
 const connectDb = require('./db/db.js')
 const app = express()
 const userRoutes = require('./routes/user.routes.js')
+const cookieParser = require('cookie-parser')
 app.use(cors());
-
+app.use(cookieParser())
 connectDb()
 
 

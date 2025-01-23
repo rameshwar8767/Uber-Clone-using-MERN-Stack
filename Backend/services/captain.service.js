@@ -1,4 +1,5 @@
 const Captain = require('../models/captain.model.js');
+const bcrypt = require('bcrypt');
 
 module.exports.createCaptain = async ({
     firstname,
@@ -11,6 +12,7 @@ module.exports.createCaptain = async ({
     capacity,
     vehicleType,
 }) => {
+    // Check if all required fields are provided
     if (
         !firstname || 
         !lastname || 
@@ -25,6 +27,18 @@ module.exports.createCaptain = async ({
         throw new Error("All fields are required");
     }
 
+    // Check if the email or phoneNumber already exists
+    const existingCaptain = await Captain.findOne({ 
+        $or: [{ email }, { phoneNumber }] 
+    });
+    if (existingCaptain) {
+        throw new Error("Captain with the given email or phone number already exists");
+    }
+
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the new captain
     const captain = await Captain.create({
         fullname: {
             firstname,
@@ -32,7 +46,7 @@ module.exports.createCaptain = async ({
         },
         email,
         phoneNumber,
-        password,
+        password: hashedPassword,
         vehicle: {
             color,
             plate,

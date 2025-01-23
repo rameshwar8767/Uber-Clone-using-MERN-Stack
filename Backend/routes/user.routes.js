@@ -6,6 +6,7 @@ const authMidaleware = require('../middlewares/auth.middleware.js')
 router.post('/register',[
     body('email').isEmail().withMessage('Invalid Email'),
     body('fullname.firstname').isLength({min: 3}).withMessage('First name must be at least 3 characters'),
+    body('phoneNumber').notEmpty().withMessage('Phone number is required'),
     body('password').isLength({min: 6}).withMessage('password must be at least 6 characters')
 ], userController.registerUser)
 
@@ -25,5 +26,5 @@ router.post('/login',[
 ], userController.loginUser)
 
 router.get('/profile', authMidaleware.authUser, userController.getUserProfile)
-router.get('/logout', authMidaleware.authUser, userController.loginUser)
+router.get('/logout', authMidaleware.authUser, userController.logoutUser)
 module.exports= router;

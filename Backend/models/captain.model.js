@@ -19,7 +19,7 @@ const captainSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true, // Fixed typo: changed `toLowercase` to `lowercase`
+      lowercase: true,
       trim: true,
       minlength: [5, 'email must be at least 5 characters'],
     },
@@ -31,10 +31,14 @@ const captainSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false, // Ensures password is not returned in queries by default
+      select: false, // Password is not returned in queries by default
     },
-    soketId: {
+    licenseNumber: {
       type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     vehicle: {
       color: {
@@ -58,14 +62,6 @@ const captainSchema = new mongoose.Schema(
         enum: ['car', 'auto'],
       },
     },
-    location: {
-      lat: {
-        type: Number,
-      },
-      lng: {
-        type: Number,
-      },
-    },
     isAvailable: {
       type: Boolean,
       default: false,
@@ -86,9 +82,10 @@ const captainSchema = new mongoose.Schema(
 
 // Pre-save hook to hash password before saving
 captainSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);  // Hash the password
+  }
+  next();  // Continue with save
 });
 
 // Generate authentication token
@@ -101,19 +98,18 @@ captainSchema.methods.generateAuthToken = async function () {
   }
 };
 
-// Compare password
+// Compare password with the hashed password
 captainSchema.methods.comparePassword = async function (password) {
   try {
     if (!password || !this.password) {
       throw new Error('Password or hash is missing');
     }
-    return await bcrypt.compare(password, this.password);
+    return await bcrypt.compare(password, this.password);  // Compare plain password with hashed password
   } catch (error) {
     throw new Error('Password comparison failed');
   }
 };
 
-// Create and export the model
 const Captain = mongoose.model('Captain', captainSchema);
 
 module.exports = Captain;

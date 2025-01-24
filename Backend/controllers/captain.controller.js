@@ -3,36 +3,124 @@ const jwt = require('jsonwebtoken');
 const captainService = require('../services/captain.service.js');
 const { validationResult } = require('express-validator');
 const BlacklistToken = require('../models/blacklistToken.model.js');
-
+const bcrypt = require('bcrypt')
 // Create new captain account
+// module.exports.registerCaptain = async (req, res, next) => {
+//     try {
+//         const errors = validationResult(req);
+//         if (!errors.isEmpty()) {
+//             return res.status(400).json({ errors: errors.array() });
+//         }
+//         const { fullname, email, phoneNumber, password, vehicle, licenseNumber } = req.body;
+//         console.log('Request Body:', JSON.stringify(req.body, null, 2)); // Debug log
+
+//        // Validate required fields
+//        if (!fullname || !fullname.firstname || !fullname.lastname) {
+//         return res.status(400).json({ message: "Full name (firstname and lastname) is required" });
+//     }
+//     if (!vehicle || !vehicle.color || !vehicle.plate || !vehicle.capacity || !vehicle.vehicleType) {
+//         return res.status(400).json({ message: "Vehicle details (color, plate, capacity, and type) are required" });
+//     }
+//     if (!email || !phoneNumber || !password || !licenseNumber) {
+//         return res.status(400).json({ message: "Email, phone number, password, and license number are required" });
+//     }
+
+//     // Check if captain already exists
+//     const existingCaptain = await Captain.findOne({
+//         $or: [{ email }, { phoneNumber }, { licenseNumber }]
+//     });
+//     if (existingCaptain) {
+//         return res.status(400).json({ message: 'Captain already exists' });
+//     }
+
+
+//         // Hash password
+//         const hashedPassword = await Captain.hashPassword(password);
+
+//         // Create new captain
+//         const captain = await captainService.createCaptain({
+//             firstname: fullname.firstname,
+//             lastname: fullname.lastname,
+//             email,
+//             phoneNumber,
+//             licenseNumber,
+//             password: hashedPassword,
+//             vehicle: {
+//                 color: vehicle.color,
+//                 plate: vehicle.plate,
+//                 capacity: vehicle.capacity,
+//                 vehicleType: vehicle.vehicleType,
+//             },
+//         });
+
+//         // Generate token
+//         const token = await captain.generateAuthToken();
+
+//         res.status(201).json({
+//             message: 'Captain registered successfully',
+//             token,
+//             captain: {
+//                 id: captain._id,
+//                 fullname: captain.fullname,
+//                 email: captain.email,
+//                 licenseNumber: captain.licenseNumber,
+//                 phoneNumber: captain.phoneNumber,
+//             },
+//         });
+//     } catch (error) {
+//         console.error('Error during registration:', error);
+//         res.status(500).json({ message: error.message });
+    
+//     }
+// };
 module.exports.registerCaptain = async (req, res, next) => {
     try {
+        // Validate request body using express-validator
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { fullname, email, phoneNumber, password, vehicle } = req.body;
-        // Fixing `req.bo` typo to `req.body`
-        console.log(req.body);
+        // Log the incoming request body for debugging
+        console.log('Request Body:', JSON.stringify(req.body, null, 2));
 
-        // Check if captain already exists
+        const { fullname, email, phoneNumber, password, vehicle, licenseNumber } = req.body;
+
+        // Validate `fullname` and ensure it's an object with required fields
+        if (!fullname || typeof fullname !== 'object' || !fullname.firstname || !fullname.lastname) {
+            return res.status(400).json({ message: "Full name (firstname and lastname) is required" });
+        }
+
+        // Validate `vehicle` and ensure it's an object with required fields
+        if (!vehicle || typeof vehicle !== 'object' || !vehicle.color || !vehicle.plate || !vehicle.capacity || !vehicle.vehicleType) {
+            return res.status(400).json({ message: "Vehicle details (color, plate, capacity, and type) are required" });
+        }
+
+        // Validate other required fields
+        if (!email || !phoneNumber || !password || !licenseNumber) {
+            return res.status(400).json({ message: "Email, phone number, password, and license number are required" });
+        }
+
+        // Check if a captain with the same email, phone number, or license number already exists
         const existingCaptain = await Captain.findOne({
-            $or: [{ email }, { phoneNumber }]
+            $or: [{ email }, { phoneNumber }, { licenseNumber }]
         });
         if (existingCaptain) {
             return res.status(400).json({ message: 'Captain already exists' });
         }
 
-        // Hash password
-        const hashedPassword = await Captain.hashPassword(password);
+        // Hash the password
+        const hashedPassword = await Captain.hashPassword(password, 10);
 
-        // Create new captain
+        // Call the createCaptain service function
         const captain = await captainService.createCaptain({
-            firstname: fullname.firstname,
-            lastname: fullname.lastname,
+            fullname: {
+                firstname: fullname.firstname,
+                lastname: fullname.lastname,
+            },
             email,
             phoneNumber,
+            licenseNumber,
             password: hashedPassword,
             vehicle: {
                 color: vehicle.color,
@@ -42,9 +130,10 @@ module.exports.registerCaptain = async (req, res, next) => {
             },
         });
 
-        // Generate token
+        // Generate authentication token (assumes `generateAuthToken` exists on the captain instance)
         const token = await captain.generateAuthToken();
 
+        // Respond with success
         res.status(201).json({
             message: 'Captain registered successfully',
             token,
@@ -52,6 +141,7 @@ module.exports.registerCaptain = async (req, res, next) => {
                 id: captain._id,
                 fullname: captain.fullname,
                 email: captain.email,
+                licenseNumber: captain.licenseNumber,
                 phoneNumber: captain.phoneNumber,
             },
         });
@@ -61,7 +151,9 @@ module.exports.registerCaptain = async (req, res, next) => {
     }
 };
 
-// Login captain
+
+
+
 module.exports.loginCaptain = async (req, res, next) => {
     try {
         const errors = validationResult(req);
@@ -76,9 +168,12 @@ module.exports.loginCaptain = async (req, res, next) => {
         if (!captain) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-
+        console.log(captain);
+        
         // Verify the password
         const isValid = await captain.comparePassword(password);
+        console.log(isValid);
+        
         if (!isValid) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }

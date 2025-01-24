@@ -13,6 +13,7 @@ router.post('/register',[
     body('vehicle.plate').notEmpty().withMessage('Vehicle plate is required'),
     body('vehicle.capacity').notEmpty().withMessage('Vehicle capacity is required'),
     body('vehicle.vehicleType').notEmpty().withMessage('Vehicle type is required'),
+    body('licenseNumber').notEmpty().withMessage('License number is required'),
 ],captainController.registerCaptain)
 
 
